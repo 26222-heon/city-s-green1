@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도시 녹지율 및 기온 감소량 분석 Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+        .chart-box {
+            position: relative;
+            height: 450px;
+            width: 100%;
+        }
+        .info-card {
+            margin-top: 25px;
+            padding: 15px 20px;
+            background-color: #e8f5e9;
+            border-left: 5px solid #2ecc71;
+            border-radius: 4px;
+        }
+        .info-card h3 {
+            margin: 0 0 8px 0;
+            color: #27ae60;
+        }
+        .info-card p {
+            margin: 0;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>도시 녹지율에 따른 기온 변화 분석</h1>
+    <p class="subtitle">연도별 녹지 비율 추이 및 기온 감소량(도시열섬 완화 임계점 분석)</p>
+    
+    <div class="chart-box">
+        <canvas id="heatIslandChart"></canvas>
+    </div>
+
+    <div class="info-card">
+        <h3>🌱 도시 녹지 임계점 (Green Threshold) 분석 결과</h3>
+        <p>
+            녹지율이 **20%~30% 구간**에 진입하는 시점부터 도시의 평균 기온 감소폭이 가파라집니다. 
+            해당 임계점 이상 확보된 녹지 면적은 인근 열섬 현상을 억제하고 주변 기온을 <strong>1.0°C ~ 1.5°C</strong> 추가 감소시키는 냉각 효과를 발휘합니다.
+        </p>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('heatIslandChart').getContext('2d');
+
+    // 연도 데이터 (2008 ~ 2025)
+    const labels = ['2008', '2010', '2012', '2014', '2016', '2018', '2020', '2022', '2024', '2025'];
+    
+    // 연도별 샘플 녹지율 (%) 데이터
+    const greenRatioData = [15.2, 16.5, 18.1, 21.4, 24.8, 27.5, 29.3, 31.0, 32.5, 33.1];
+    
+    // 기온 감소량 (°C) 데이터
+    const tempDropData = [0.2, 0.3, 0.5, 1.1, 1.6, 1.9, 2.1, 2.3, 2.5, 2.6];
+
+    // X축 레이블 커스텀 (연도 + 녹지율 표시)
+    const customXLabels = labels.map((year, index) => `${year}\n(${greenRatioData[index]}%)`);
+
+    const heatIslandChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: customXLabels,
+            datasets: [
+                {
+                    label: '기온 감소량 (°C)',
+                    data: tempDropData,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3,
+                    yAxisID: 'y'
+                },
+                {
+                    label: '도시 녹지율 (%)',
+                    data: greenRatioData,
+                    borderColor: '#2ecc71',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            const index = context[0].dataIndex;
+                            return `연도: ${labels[index]}년 (녹지율: ${greenRatioData[index]}%)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: '연도 (녹지율 %)',
+                        font: { weight: 'bold' }
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: '기온 감소량 (°C)',
+                        font: { weight: 'bold' }
+                    },
+                    grid: {
+                        color: '#f0f0f0'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: '녹지율 (%)',
+                        font: { weight: 'bold' }
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
